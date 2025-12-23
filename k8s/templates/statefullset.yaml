@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.statefulset.name }} # Use a helper template for consistent naming
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.statefulset.name }}
+  serviceName: {{ .Values.serviceBackend.name | quote }}
+  replicas: {{ .Values.statefulset.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.statefulset.name }}
+    spec:
+      containers:
+        - name: {{ .Values.statefulset.name }}
+          image: "{{ .Values.statefulset.image.repository }}:{{ .Values.statefulset.image.tag | default .Chart.AppVersion }}"
+          ports:
+            - containerPort: {{ .Values.statefulset.image.port }}
+          env:
+            - name: GREETING_PREFIX
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.configMap.name }}
+                  key: GREETING_PREFIX
+          {{- range .Values.volumeMounts}}
+          volumeMounts:
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+          {{- end }}
+  volumeClaimTemplates:
+  - metadata:
+      name: {{ .Values.volumeClaimTemplates.name }}
+    spec:
+      accessModes: [ "{{ .Values.volumeClaimTemplates.accessMode }}" ]
+      resources:
+        requests:
+          storage: {{ .Values.volumeClaimTemplates.size }}

@@ -1,0 +1,101 @@
+namespace: demo-k8s
+
+deployment:
+  replicaCount: 2
+  name: frontend
+  image:
+    repository: frankyfix6605/k8s-frontend
+    pullPolicy: IfNotPresent
+    tag: 0.0.1
+    port: 80
+
+statefulset:
+  replicaCount: 1
+  name: backend
+  image:
+    repository: frankyfix6605/k8s-backend
+    pullPolicy: IfNotPresent
+    tag: 0.0.1
+    port: 8000
+
+policy:
+  name: frontend-to-backend
+  selector:
+    name: nginx
+    component: controller
+
+configMap:
+  name: backend-config 
+  prefix: "Привет из Kubernetes!"
+
+# This is to override the chart name.
+nameOverride: ""
+fullnameOverride: ""
+# This is for setting Kubernetes Labels to a Pod.
+# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+podLabels: {}
+
+# This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
+serviceFrontend:
+  name: frontend-svc
+  type: ClusterIP
+  port: 80
+  selector:
+    app: frontend
+
+serviceBackend:
+  name: backend-svc
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+  selector:
+    app: backend
+
+service:
+  type: ClusterIP
+  port: 80
+
+# This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations: {}
+  hosts:
+    - host: demo.local
+      paths:
+        - path: /
+          pathType: Prefix
+          service:
+            name: frontend-svc
+            port: 80
+        - path: /api
+          pathType: Prefix
+          service:
+            name: backend-svc
+            port: 80
+  
+resources:
+  limits:
+    cpu: 500m
+    memory: 128Mi
+  requests:
+    cpu: 250m
+    memory: 64Mi
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+
+volumeMounts: 
+  - name: data
+    mountPath: "/data"
+
+volumeClaimTemplates:
+  name: data
+  accessMode: ReadWriteOnce
+  size: 100Mi
