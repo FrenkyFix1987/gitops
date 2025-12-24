@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: demo-applicationset
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+      - name: frontend
+        path: apps/frontend
+      - name: backend
+        path: apps/backend
+  template:
+    metadata:
+      name: '{{name}}-app'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/FrenkyFix1987/gitops.git
+        targetRevision: HEAD
+        path: '{{path}}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{name}}-ns'
+      syncPolicy:
+        automated: 
+          enabled: true
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true
