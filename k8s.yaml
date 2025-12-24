@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: k8s
+  namespace: argocd
+spec:
+  destination:
+    namespace: k8s
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    helm:
+      parameters:
+      - name: deployment.replicaCount
+        value: "1"
+    path: k8s/
+    repoURL: https://github.com/FrenkyFix1987/gitops.git
+    targetRevision: HEAD
+  syncPolicy:
+    automated:
+      enabled: true
+      prune: true
+      selfHeal: true
