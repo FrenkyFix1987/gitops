@@ -3,6 +3,12 @@ kind: ApplicationSet
 metadata:
   name: demo-applicationset
   namespace: argocd
+  metadata:
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"  # Replace with your app's metric port
+    prometheus.io/path: "/metrics" # Optional, default is /metrics
+
 spec:
   generators:
   - git:
